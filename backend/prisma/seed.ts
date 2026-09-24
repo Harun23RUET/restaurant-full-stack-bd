@@ -1,6 +1,8 @@
-﻿import { PrismaClient } from "../src/generated/prisma/client.js";`r`nimport { PrismaPg } from "@prisma/adapter-pg";
+﻿import { PrismaClient } from "../src/generated/prisma/client.js";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });`r`nconst prisma = new PrismaClient({ adapter });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 const categories = [
   {
@@ -362,4 +364,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
