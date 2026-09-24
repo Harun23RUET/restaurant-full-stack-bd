@@ -28,6 +28,24 @@ export class AuthController {
       body.password,
     );
   }
+  @Post('forgot-password')
+  forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(
+    @Body() body: {
+      token: string;
+      password: string;
+    },
+  ) {
+    return this.authService.resetPassword(
+      body.token,
+      body.password,
+    );
+  }
+
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -35,3 +53,4 @@ export class AuthController {
     return this.authService.me(req.user.sub);
   }
 }
+

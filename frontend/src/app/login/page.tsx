@@ -29,6 +29,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -104,14 +105,33 @@ export default function LoginPage() {
                 Password
               </label>
 
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-orange-500"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 pr-16 outline-none focus:border-orange-500"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500 hover:text-orange-500"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+
+              <div className="mt-2 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-bold text-orange-500 hover:text-orange-600"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             <button
@@ -122,6 +142,16 @@ export default function LoginPage() {
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
+
+          <div className="mt-5 text-center text-sm text-slate-500">
+            Don't have an account?{" "}
+            <Link
+              href="/account"
+              className="font-bold text-orange-500 hover:text-orange-600"
+            >
+              Create Account
+            </Link>
+          </div>
 
           <Link
             href="/menu"
