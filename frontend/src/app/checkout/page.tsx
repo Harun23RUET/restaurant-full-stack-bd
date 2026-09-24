@@ -106,7 +106,7 @@ const [discount, setDiscount] = useState(0);
         }
 
         const response = await fetch(
-          `http://localhost:4000/api/cart/${userId}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/cart/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -176,12 +176,12 @@ const [discount, setDiscount] = useState(0);
       if (!token) return;
 
       const [addressResponse, zoneResponse] = await Promise.all([
-        fetch("http://localhost:4000/api/customers/addresses", {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/customers/addresses`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }),
-        fetch("http://localhost:4000/api/delivery/zones/active", {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/delivery/zones/active`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -270,7 +270,7 @@ const [discount, setDiscount] = useState(0);
       }
 
       const response = await fetch(
-        "http://localhost:4000/api/customers/addresses",
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/customers/addresses`,
         {
           method: "POST",
           headers: {
@@ -483,7 +483,7 @@ const [discount, setDiscount] = useState(0);
       };
 
       const response = await fetch(
-        "http://localhost:4000/api/orders",
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/orders`,
         {
           method: "POST",
           headers: {
@@ -509,7 +509,7 @@ const [discount, setDiscount] = useState(0);
 
       try {
         await fetch(
-          `http://localhost:4000/api/cart/clear/${cart!.userId}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/cart/clear/${cart!.userId}`,
           {
             method: "DELETE",
             headers: {
@@ -1219,6 +1219,9 @@ const [discount, setDiscount] = useState(0);
     </main>
   );
 }
+
+
+
 
 
 

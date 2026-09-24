@@ -22,7 +22,7 @@ type Cart = {
   total: number;
 };
 
-const API = "http://localhost:4000/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
@@ -474,3 +474,4 @@ export default function CartPage() {
     </main>
   );
 }
+

@@ -1,6 +1,6 @@
 ﻿import { getToken } from "./auth";
 
-const API_BASE = "http://localhost:4000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 async function apiRequest<T>(
   path: string,
@@ -93,3 +93,4 @@ export async function apiPut<T>(
     body: JSON.stringify(body),
   });
 }
+

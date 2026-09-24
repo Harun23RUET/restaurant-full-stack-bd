@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
-const API = "http://localhost:4000/api";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 type User = {
   id: string;
@@ -733,3 +733,4 @@ export default function AccountPage() {
     </main>
   );
 }
+

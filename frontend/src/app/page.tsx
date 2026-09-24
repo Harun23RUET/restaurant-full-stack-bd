@@ -65,7 +65,7 @@ export default function Home() {
       return;
     }
 
-    fetch(`http://localhost:4000/api/cart/${userId}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/cart/${userId}`, {
       cache: "no-store",
     })
       .then((response) => {
@@ -847,6 +847,7 @@ export default function Home() {
     </main>
   );
 }
+
 
 
 
