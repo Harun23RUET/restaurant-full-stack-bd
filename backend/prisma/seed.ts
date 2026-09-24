@@ -43,7 +43,7 @@ const items = [
     name: "Mutton Biryani",
     price: 380,
     description: "Tender mutton cooked with aromatic basmati rice and traditional spices.",
-    imageUrl: "https://images.unsplash.com/photo-1563379091339-03246963d96c?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 2,
@@ -63,7 +63,7 @@ const items = [
     name: "Chicken Biryani",
     price: 250,
     description: "Classic chicken biryani with aromatic rice and flavorful spices.",
-    imageUrl: "https://images.unsplash.com/photo-1563379091339-03246963d96c?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 4,
@@ -73,7 +73,7 @@ const items = [
     name: "Egg Biryani",
     price: 220,
     description: "Aromatic biryani served with seasoned eggs.",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/6/6f/Egg_biryani.jpg",
+    imageUrl: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 5,
@@ -143,7 +143,7 @@ const items = [
     name: "Tandoori Chicken",
     price: 350,
     description: "Classic tandoori chicken marinated in spices and roasted until juicy.",
-    imageUrl: "https://images.unsplash.com/photo-1603073863344-8a06b10e4dc0?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 5,
@@ -362,6 +362,7 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
 
 
