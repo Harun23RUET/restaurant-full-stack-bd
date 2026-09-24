@@ -1,0 +1,71 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#24120a"/>
+      <stop offset="55%" stop-color="#7c2d12"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <radialGradient id="rice" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#fff8dc"/>
+      <stop offset="70%" stop-color="#f2d18a"/>
+      <stop offset="100%" stop-color="#c88b3a"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#bg)"/>
+
+  <ellipse cx="600" cy="550" rx="390" ry="105"
+           fill="#000" opacity=".3"/>
+
+  <ellipse cx="600" cy="490" rx="335" ry="185"
+           fill="#3b2419"/>
+
+  <ellipse cx="600" cy="455" rx="315" ry="158"
+           fill="#8b5e3c"/>
+
+  <ellipse cx="600" cy="430" rx="285" ry="132"
+           fill="url(#rice)"/>
+
+  <g fill="#9a3412">
+    <ellipse cx="465" cy="425" rx="45" ry="27"/>
+    <ellipse cx="550" cy="465" rx="42" ry="24"/>
+    <ellipse cx="655" cy="415" rx="47" ry="27"/>
+    <ellipse cx="740" cy="455" rx="42" ry="25"/>
+  </g>
+
+  <g fill="#22c55e">
+    <rect x="480" y="390" width="11" height="60" rx="5"
+          transform="rotate(-20 480 390)"/>
+    <rect x="610" y="375" width="11" height="62" rx="5"
+          transform="rotate(18 610 375)"/>
+    <rect x="710" y="400" width="10" height="58" rx="5"
+          transform="rotate(-14 710 400)"/>
+  </g>
+
+  <text x="600" y="135"
+        text-anchor="middle"
+        fill="#fff7ed"
+        font-family="Arial,sans-serif"
+        font-size="56"
+        font-weight="900">
+    MARHABA
+  </text>
+
+  <text x="600" y="185"
+        text-anchor="middle"
+        fill="#fed7aa"
+        font-family="Arial,sans-serif"
+        font-size="24"
+        letter-spacing="7">
+    DUM BIRYANI &amp; LOUNGE
+  </text>
+
+  <text x="600" y="705"
+        text-anchor="middle"
+        fill="#fff"
+        font-family="Arial,sans-serif"
+        font-size="28"
+        font-weight="700">
+    Signature Dum Biryani
+  </text>
+</svg>

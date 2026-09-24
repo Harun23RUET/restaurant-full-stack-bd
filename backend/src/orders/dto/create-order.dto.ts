@@ -1,0 +1,110 @@
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class CreateOrderOptionDto {
+  @IsString()
+  optionId!: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+}
+
+export class CreateOrderAddonDto {
+  @IsString()
+  addonId!: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+}
+
+export class CreateOrderItemDto {
+  @IsString()
+  menuItemId!: string;
+
+  @IsInt()
+  @Min(1)
+  quantity!: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderOptionDto)
+  options?: CreateOrderOptionDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderAddonDto)
+  addons?: CreateOrderAddonDto[];
+}
+
+export class CreateOrderDto {
+  @IsOptional()
+  @IsString()
+  customerId?: string;
+
+  @IsEnum(['DINE_IN', 'TAKEAWAY', 'DELIVERY'])
+  orderType!: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemDto)
+  items!: CreateOrderItemDto[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  deliveryFee?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  tax?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  serviceCharge?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discount?: number;
+
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryAddressId?: string;
+
+  @IsOptional()
+  @IsString()
+  specialInstructions?: string;
+
+  @IsOptional()
+  @IsString()
+  scheduledAt?: string;
+
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
+}

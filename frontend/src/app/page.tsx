@@ -1,0 +1,872 @@
+﻿"use client";
+
+import { useEffect, useState } from "react";
+
+const signature = [
+  {
+    no: "01",
+    title: "Royal Dum Biryani",
+    text: "Long-grain basmati, tender meat, saffron and slow-cooked spices.",
+    image:
+      "https://www.chandni-restaurant.com/images/biryani.png",
+  },
+  {
+    no: "02",
+    title: "Mutton Biryani",
+    text: "Rich, aromatic and deeply flavoured with our signature dum method.",
+    image:
+      "https://images.unsplash.com/photo-1631515242808-497c3fbd3972?auto=format&fit=crop&w=1400&q=90",
+  },
+  {
+    no: "03",
+    title: "Chicken Biryani",
+    text: "Fragrant rice layered with perfectly seasoned, juicy chicken.",
+    image:
+      "https://images.unsplash.com/photo-1633945274309-2c16c9682a8c?auto=format&fit=crop&w=1400&q=90",
+  },
+];
+
+const categories = [
+  {
+    title: "Biryani",
+    sub: "Our signature",
+    image:
+      "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=1200&q=90",
+  },
+  {
+    title: "Kebabs",
+    sub: "Fire & flavour",
+    image:
+      "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1200&q=90",
+  },
+  {
+    title: "Main Course",
+    sub: "Rich & refined",
+    image:
+      "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=90",
+  },
+  {
+    title: "Drinks",
+    sub: "Fresh moments",
+    image:
+      "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=1200&q=90",
+  },
+];
+
+export default function Home() {
+  const [open, setOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) {
+      setCartCount(0);
+      return;
+    }
+
+    fetch(`http://localhost:4000/api/cart/${userId}`, {
+      cache: "no-store",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to load cart");
+        return response.json();
+      })
+      .then((data) => {
+        const count = Array.isArray(data?.items)
+          ? data.items.reduce(
+              (sum: number, item: any) =>
+                sum + (Number(item.quantity) || 0),
+              0,
+            )
+          : 0;
+
+        setCartCount(count);
+      })
+      .catch(() => {
+        setCartCount(0);
+      });
+  }, []);
+
+  return (
+    <main className="overflow-x-hidden bg-[#f5f0e8] text-[#18130f]">
+      {/* PREMIUM MARHABA NAV */}
+      <nav className="fixed left-0 right-0 top-0 z-50 px-4 pt-4 sm:px-7">
+        <div className="mx-auto flex max-w-7xl items-center justify-between border border-white/10 bg-black/55 px-5 py-4 text-white shadow-2xl backdrop-blur-xl sm:rounded-full sm:px-7">
+
+          {/* MARHABA LOGO */}
+          <a href="/" className="group flex items-center gap-3 leading-none">
+            <span className="relative flex h-10 w-10 items-center justify-center">
+              <svg
+                viewBox="0 0 48 48"
+                className="h-9 w-9 text-amber-300 transition duration-300 group-hover:scale-110"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M24 4C24 4 15 14 15 23C15 29.2 19 34 24 34C29 34 33 29.2 33 23C33 14 24 4 24 4Z"
+                  fill="currentColor"
+                  opacity="0.95"
+                />
+                <path
+                  d="M24 17C24 17 20 21.5 20 25.5C20 28.3 21.8 30 24 30C26.2 30 28 28.3 28 25.5C28 21.5 24 17 24 17Z"
+                  fill="black"
+                  opacity="0.75"
+                />
+                <path
+                  d="M12 38H36"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M16 42H32"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+
+            <span>
+              <span className="block text-xl font-black tracking-[0.18em] text-amber-100 sm:text-2xl">
+                MARHABA
+              </span>
+              <span className="mt-1 block text-[7px] tracking-[0.42em] text-amber-300">
+                DUM BIRYANI & LOUNGE
+              </span>
+            </span>
+          </a>
+
+          {/* DESKTOP MENU */}
+          <div className="hidden items-center gap-9 text-[11px] font-bold uppercase tracking-[0.18em] md:flex">
+            <a href="/" className="relative text-amber-300">
+              Home
+              <span className="absolute -bottom-3 left-1/2 h-px w-5 -translate-x-1/2 bg-amber-300" />
+            </a>
+
+            <a href="/menu" className="transition hover:text-amber-300">
+              Menu
+            </a>
+
+            <a href="#story" className="transition hover:text-amber-300">
+              Our Story
+            </a>
+
+            <a href="#experience" className="transition hover:text-amber-300">
+              Experience
+            </a>
+
+            <a href="#visit" className="transition hover:text-amber-300">
+              Visit
+            </a>
+          </div>
+
+          {/* RIGHT ACTIONS */}
+          <div className="flex items-center gap-3">
+
+            {/* SEARCH */}
+            <button
+              type="button"
+              aria-label="Search"
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 transition hover:border-amber-300 hover:text-amber-300 md:flex"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="M16 16L21 21" strokeLinecap="round" />
+              </svg>
+            </button>
+
+            {/* CART */}
+            <a
+              href="/cart"
+              aria-label="Cart"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 transition hover:border-amber-300 hover:text-amber-300"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="9" cy="20" r="1.2" />
+                <circle cx="18" cy="20" r="1.2" />
+                <path d="M3 4H5L7.2 15H19L21 7H6" />
+              </svg>
+
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[9px] font-black text-black">
+                {cartCount}
+              </span>
+            </a>
+
+            {/* ORDER BUTTON */}
+            <a
+              href="/menu"
+              className="hidden rounded-full bg-amber-400 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:scale-105 hover:bg-amber-300 lg:block"
+            >
+              Order Now
+            </a>
+
+            {/* MOBILE MENU */}
+            <button
+              onClick={() => setOpen(!open)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-xl md:hidden"
+              aria-label="Open menu"
+            >
+              {open ? "×" : "☰"}
+            </button>
+          </div>
+        </div>
+
+        {/* MOBILE MENU */}
+        {open && (
+          <div className="mx-1 mt-2 rounded-3xl border border-white/10 bg-black/95 p-6 text-white shadow-2xl backdrop-blur-xl md:hidden">
+            <div className="flex flex-col gap-5 text-center text-sm font-bold uppercase tracking-widest">
+              <a href="/" onClick={() => setOpen(false)} className="text-amber-300">
+                Home
+              </a>
+              <a href="/menu" onClick={() => setOpen(false)}>
+                Menu
+              </a>
+              <a href="#story" onClick={() => setOpen(false)}>
+                Our Story
+              </a>
+              <a href="#experience" onClick={() => setOpen(false)}>
+                Experience
+              </a>
+              <a href="#visit" onClick={() => setOpen(false)}>
+                Visit
+              </a>
+              <a
+                href="/cart"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-white/15 py-3"
+              >
+                Cart
+              </a>
+              <a
+                href="/menu"
+                onClick={() => setOpen(false)}
+                className="rounded-full bg-amber-400 py-3 text-black"
+              >
+                Order Now
+              </a>
+            </div>
+          </div>
+        )}
+      </nav>
+
+
+      {/* HERO */}
+      <section className="relative min-h-screen overflow-hidden bg-[#120d09]">
+
+        <img
+          src="/hero-biryani.png"
+          alt="Handi Dum Biryani"
+          className="absolute inset-0 h-full w-full object-cover object-center scale-100 transition-transform duration-700"
+        />
+
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+
+        <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-6 pt-32 sm:px-10 lg:px-16">
+
+          <div className="max-w-3xl text-white">
+
+            <div className="mb-6 flex items-center gap-4">
+              <span className="h-px w-12 bg-amber-400 sm:w-14" />
+              <span className="text-[9px] font-black uppercase tracking-[0.4em] text-amber-300 sm:text-xs">
+                Authentic Bangladeshi Flavours
+              </span>
+            </div>
+
+            <h1 className="text-[3.8rem] font-black leading-[0.86] tracking-[-0.045em] bg-gradient-to-r from-amber-200 via-orange-300 to-rose-300 bg-clip-text text-transparent sm:text-7xl lg:text-[7.5rem]">
+              MARHABA
+            </h1>
+
+            <p className="mt-6 text-lg font-medium uppercase tracking-[0.24em] text-white/90 sm:text-2xl">
+              Dum Biryani & Lounge
+            </p>
+
+            <p className="mt-6 max-w-xl text-sm leading-7 text-white/70 sm:text-base">
+              A modern dining destination built around the timeless art of
+              slow-cooked biryani, bold spices and warm hospitality.
+            </p>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+
+              <a
+                href="/menu"
+                className="rounded-full bg-amber-400 px-9 py-4 text-center text-xs font-black uppercase tracking-widest text-black transition hover:bg-amber-300"
+              >
+                Explore Menu
+              </a>
+
+              <a
+                href="/cart"
+                className="rounded-full border border-white/30 bg-white/10 px-9 py-4 text-center text-xs font-black uppercase tracking-widest text-white backdrop-blur-md transition hover:bg-white hover:text-black"
+              >
+                Order Now
+              </a>
+
+            </div>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3 text-[9px] uppercase tracking-[0.3em] text-white/50">
+              <span>Dine In</span>
+              <span className="text-amber-400">•</span>
+              <span>Takeaway</span>
+              <span className="text-amber-400">•</span>
+              <span>Delivery</span>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+      {/* STORY / INTERIOR + FOOD */}
+      <section id="story" className="px-5 py-24 sm:px-8 sm:py-32">
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-700">
+                Welcome to MARHABA
+              </p>
+
+              <h2 className="mt-5 text-5xl font-black leading-[0.95] tracking-tight sm:text-7xl">
+                The art of
+                <br />
+                <span className="text-amber-700">dum cooking.</span>
+              </h2>
+
+              <p className="mt-7 max-w-lg text-sm leading-8 text-black/55 sm:text-base">
+                We believe great biryani needs time. Layers of fragrant rice,
+                carefully selected spices and tender meat come together slowly
+                under the dum—creating a flavour that stays long after the meal.
+              </p>
+
+              <div className="mt-9 flex items-center gap-8 border-t border-black/10 pt-7">
+                <div>
+                  <div className="text-3xl font-black">01</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-widest text-black/45">
+                    Authentic
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-3xl font-black">02</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-widest text-black/45">
+                    Slow Cooked
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-3xl font-black">03</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-widest text-black/45">
+                    Fresh
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative min-h-[570px]">
+
+              <div
+                className="absolute right-0 top-0 h-[72%] w-[82%] rounded-[2rem] bg-cover bg-center shadow-2xl"
+                style={{
+                  backgroundImage: "url('/hero-biryani.png')",
+                }}
+              />
+
+              <div className="absolute bottom-0 left-0 h-[48%] w-[57%] overflow-hidden rounded-[2rem] border-8 border-[#f5f0e8] shadow-2xl">
+                <img
+                  src="https://www.chandni-restaurant.com/images/biryani.png"
+                  alt="MARHABA biryani"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              <div className="absolute bottom-16 right-4 rounded-2xl bg-black px-6 py-5 text-white shadow-xl sm:right-10">
+                <p className="text-[9px] uppercase tracking-[0.3em] text-amber-300">
+                  Our Signature
+                </p>
+                <p className="mt-2 text-xl font-black">
+                  Royal Biryani
+                </p>
+              </div>
+
+              <div className="absolute left-7 top-8 hidden text-[5rem] font-black tracking-[-0.08em] text-white/10 sm:block">
+                MARHABA
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SIGNATURE DISHES */}
+      <section className="bg-[#19130f] px-5 py-24 text-white sm:px-8 sm:py-32">
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.42em] text-amber-300">
+                From our kitchen
+              </p>
+
+              <h2 className="mt-4 text-5xl font-black tracking-tight sm:text-7xl">
+                Signature Selections
+              </h2>
+            </div>
+
+            <a
+              href="/menu"
+              className="text-xs font-black uppercase tracking-widest text-amber-300"
+            >
+              View Full Menu →
+            </a>
+          </div>
+
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+
+            {signature.map((dish) => (
+              <article
+                key={dish.no}
+                className="group overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.035]"
+              >
+
+                <div className="relative h-80 overflow-hidden">
+
+                  <img
+                    src={dish.image}
+                    alt={dish.title}
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  />
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+
+                  <div className="absolute left-6 top-6 text-3xl font-black text-white/70">
+                    {dish.no}
+                  </div>
+
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <h3 className="text-2xl font-black sm:text-3xl">
+                      {dish.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="p-7">
+
+                  <p className="text-sm leading-7 text-white/50">
+                    {dish.text}
+                  </p>
+
+                  <a
+                    href="/menu"
+                    className="mt-6 inline-block text-[10px] font-black uppercase tracking-[0.25em] text-amber-300"
+                  >
+                    Order This →
+                  </a>
+
+                </div>
+              </article>
+            ))}
+
+          </div>
+        </div>
+      </section>
+
+      {/* FOOD CATEGORIES */}
+      <section className="px-5 py-24 sm:px-8 sm:py-32">
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="max-w-3xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.42em] text-amber-700">
+              Explore the menu
+            </p>
+
+            <h2 className="mt-4 text-5xl font-black tracking-tight sm:text-7xl">
+              More than biryani.
+            </h2>
+
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-black/50 sm:text-base">
+              A complete dining experience—from smoky grills and rich mains
+              to refreshing drinks.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
+            {categories.map((category) => (
+              <a
+                key={category.title}
+                href="/menu"
+                className="group relative h-[390px] overflow-hidden rounded-[1.8rem]"
+              >
+
+                <img
+                  src={category.image}
+                  alt={category.title}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+                <div className="absolute bottom-7 left-7 text-white">
+                  <p className="text-[9px] uppercase tracking-[0.32em] text-amber-300">
+                    {category.sub}
+                  </p>
+
+                  <h3 className="mt-2 text-3xl font-black">
+                    {category.title}
+                  </h3>
+
+                  <span className="mt-4 inline-block text-xs font-bold uppercase tracking-widest text-white/70">
+                    Explore →
+                  </span>
+                </div>
+
+              </a>
+            ))}
+
+          </div>
+        </div>
+      </section>
+
+      {/* EXPERIENCE */}
+      <section
+        id="experience"
+        className="relative overflow-hidden bg-[#ded0ba] px-5 py-24 sm:px-8 sm:py-32"
+      >
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="grid gap-14 lg:grid-cols-2 lg:items-center">
+
+            <div className="relative order-2 h-[510px] overflow-hidden rounded-[2rem] lg:order-1">
+
+              <img
+                src="https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=1800&q=90"
+                alt="Luxury restaurant interior"
+                className="h-full w-full object-cover"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+              <div className="absolute bottom-8 left-8 text-white">
+                <p className="text-[9px] uppercase tracking-[0.35em] text-amber-300">
+                  The Lounge
+                </p>
+                <p className="mt-2 text-3xl font-black">
+                  Sit back. Stay awhile.
+                </p>
+              </div>
+            </div>
+
+            <div className="order-1 lg:order-2">
+
+              <p className="text-[10px] font-black uppercase tracking-[0.42em] text-amber-800">
+                The MARHABA Experience
+              </p>
+
+              <h2 className="mt-5 text-5xl font-black leading-[0.95] sm:text-7xl">
+                Come for the
+                <br />
+                biryani.
+                <br />
+                <span className="text-amber-800">Stay for the vibe.</span>
+              </h2>
+
+              <p className="mt-7 max-w-xl text-sm leading-8 text-black/55 sm:text-base">
+                A warm, modern lounge designed for slow dinners, family
+                gatherings, casual meetups and memorable nights in Bangkok.
+              </p>
+
+              <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-4">
+
+                {["Dine In", "Takeaway", "Delivery", "Group Dining"].map(
+                  (item) => (
+                    <div
+                      key={item}
+                      className="rounded-2xl border border-black/10 bg-white/35 p-4"
+                    >
+                      <p className="text-xs font-black">{item}</p>
+                    </div>
+                  )
+                )}
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* FOOD + ORDER STORY */}
+      <section className="bg-[#19130f] px-5 py-24 text-white sm:px-8 sm:py-32">
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+
+            <div>
+
+              <p className="text-[10px] font-black uppercase tracking-[0.42em] text-amber-300">
+                Made for your table
+              </p>
+
+              <h2 className="mt-5 text-5xl font-black leading-tight sm:text-7xl">
+                From our pot
+                <br />
+                to your table.
+              </h2>
+
+              <p className="mt-7 max-w-xl text-sm leading-8 text-white/50 sm:text-base">
+                Order online, choose your favourites and let MARHABA bring the
+                flavour to you.
+              </p>
+
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+
+                <a
+                  href="/menu"
+                  className="rounded-full bg-amber-400 px-8 py-4 text-center text-xs font-black uppercase tracking-widest text-black transition hover:bg-amber-300"
+                >
+                  Start Ordering
+                </a>
+
+                <a
+                  href="/cart"
+                  className="rounded-full border border-white/20 px-8 py-4 text-center text-xs font-black uppercase tracking-widest transition hover:bg-white hover:text-black"
+                >
+                  View Cart
+                </a>
+
+              </div>
+            </div>
+
+            <div className="relative">
+
+              <img
+                src="https://s3-ap-southeast-1.amazonaws.com/assets.limetray.com/assets/user_images/content_images/original/menupage-3453242.jpg"
+                alt="Handi Dum Biryani"
+                className="h-[480px] w-full rounded-[2rem] object-cover"
+              />
+
+              <div className="absolute -bottom-6 -left-5 max-w-xs rounded-3xl bg-[#f5f0e8] p-6 text-black shadow-2xl sm:left-8">
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-amber-700">
+                  Order your way
+                </p>
+                <p className="mt-3 text-xl font-black">
+                  Dine in, takeaway or delivery.
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* VISIT */}
+      <section id="visit" className="px-5 py-24 sm:px-8 sm:py-32">
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="rounded-[2rem] bg-[#d09a32] p-8 sm:p-14">
+
+            <div className="grid gap-10 md:grid-cols-2 md:items-end">
+
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.42em] text-black/55">
+                  Visit MARHABA
+                </p>
+
+                <h2 className="mt-4 text-5xl font-black leading-none sm:text-7xl">
+                  Your table
+                  <br />
+                  is waiting.
+                </h2>
+              </div>
+
+              <div>
+
+                <p className="text-sm leading-7 text-black/65">
+                  New Market, Rajshahi
+                  <br />
+                  Bangladesh
+                </p>
+
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=New%20Market%2C%20Rajshahi"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-black px-7 py-3 text-center text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#221912]"
+                  >
+                    Get Directions
+                  </a>
+
+                  <a
+                    href="/menu"
+                    className="rounded-full border border-black/20 px-7 py-3 text-center text-xs font-black uppercase tracking-widest transition hover:bg-black hover:text-white"
+                  >
+                    Order Online
+                  </a>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="px-5 pb-24 sm:px-8 sm:pb-32">
+
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-black px-7 py-24 text-center text-white sm:px-12 sm:py-32">
+
+          <div
+            className="absolute inset-0 bg-cover bg-center sm:bg-center opacity-25"
+            style={{
+              backgroundImage: "url('/hero-biryani.png')",
+            }}
+          />
+
+          <div className="absolute inset-0 bg-black/50" />
+
+          <div className="relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-[0.42em] text-amber-300">
+              Taste the MARHABA difference
+            </p>
+
+            <h2 className="mx-auto mt-5 max-w-4xl text-5xl font-black tracking-tight sm:text-8xl">
+              Let&apos;s make dinner memorable.
+            </h2>
+
+            <a
+              href="/menu"
+              className="mt-9 inline-block rounded-full bg-amber-400 px-9 py-4 text-xs font-black uppercase tracking-widest text-black transition hover:scale-105 hover:bg-amber-300"
+            >
+              Explore Menu
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-black px-5 py-14 text-white sm:px-8">
+
+        <div className="mx-auto max-w-7xl">
+
+          <div className="grid gap-10 md:grid-cols-3">
+
+            <div>
+              <div className="text-2xl font-black tracking-[0.2em]">
+                MARHABA
+              </div>
+
+              <div className="mt-2 text-[8px] tracking-[0.45em] text-amber-300">
+                DUM BIRYANI & LOUNGE
+              </div>
+
+              <p className="mt-5 max-w-sm text-sm leading-7 text-white/35">
+                Authentic flavours, a modern lounge and a dining experience
+                made around you.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest">
+                Explore
+              </h3>
+
+              <div className="mt-5 flex flex-col gap-3 text-sm text-white/45">
+                <a href="/">Home</a>
+                <a href="/menu">Menu</a>
+                <a href="/cart">Cart</a>
+                <a href="#story">Our Story</a>
+                <a href="#visit">Visit</a>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest">
+                Contact
+              </h3>
+
+              <div className="mt-5 space-y-2 text-sm leading-7 text-white/45">
+                <p>
+                  New Market, Rajshahi
+                  <br />
+                  Bangladesh
+                </p>
+
+                <p>
+                  Phone: 01572908227
+                </p>
+
+                <p>
+                  Email: md.haruntalukder23@gmail.com
+                </p>
+
+                <p>
+                  Opening Hours: 8:00 AM - 10:00 PM
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          <div className="mt-12 border-t border-white/10 pt-7 text-xs text-white/25">
+            © 2026 MARHABA DUM BIRYANI & LOUNGE. All rights reserved.
+          </div>
+
+        </div>
+      </footer>
+
+    </main>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

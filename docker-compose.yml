@@ -1,0 +1,26 @@
+﻿services:
+
+  postgres:
+    image: postgres:18
+    container_name: restaurant_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: restaurant_db
+      POSTGRES_USER: restaurant_app
+      POSTGRES_PASSWORD: restaurant_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - restaurant_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U restaurant_app -d restaurant_db"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  restaurant_postgres_data:

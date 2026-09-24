@@ -1,0 +1,1232 @@
+﻿"use client";
+
+import { apiPost } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+
+
+type SavedAddress = {
+  id: string;
+  label: string;
+  address: string;
+  building?: string;
+  roomNumber?: string;
+  latitude?: number;
+  longitude?: number;
+  isDefault?: boolean;
+};
+
+type DeliveryZone = {
+  id: string;
+  name: string;
+  deliveryFee: number | string;
+  minimumOrder?: number | string;
+  isActive?: boolean;
+};
+
+type CartItem = {
+  id: string;
+  menuItemId: string;
+  quantity: number;
+  price: string | number;
+  menuItem?: {
+    id: string;
+    name: string;
+    price: string | number;
+    imageUrl?: string | null;
+  };
+};
+
+type CartResponse = {
+  id: string;
+  userId: string;
+  items: CartItem[];
+};
+
+type CreatedOrder = {
+  id: string;
+  orderNumber: string;
+  status: string;
+  total: string | number;
+};
+
+export default function CheckoutPage() {
+
+  const [deliveryAddressId, setDeliveryAddressId] = useState("");
+const [discount, setDiscount] = useState(0);
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressError, setAddressError] = useState("");
+  const [showNewAddress, setShowNewAddress] = useState(false);
+  const [newAddressLabel, setNewAddressLabel] = useState("Home");
+  const [newAddress, setNewAddress] = useState("");
+  const [newBuilding, setNewBuilding] = useState("");
+  const [newRoomNumber, setNewRoomNumber] = useState("");
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState("");
+
+  const router = useRouter();
+
+  const [cart, setCart] = useState<CartResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [placing, setPlacing] = useState(false);
+  const [error, setError] = useState("");
+
+  const [orderType, setOrderType] = useState("TAKEAWAY");
+  const [paymentMethod, setPaymentMethod] = useState("CASH_ON_DELIVERY");
+  const [transactionId, setTransactionId] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponApplied, setCouponApplied] = useState("");
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [specialInstructions, setSpecialInstructions] = useState("");
+
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const userId =
+          typeof window !== "undefined"
+            ? localStorage.getItem("userId")
+            : null;
+
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("access_token")
+            : null;
+
+        if (!userId || !token) {
+          router.push("/account");
+          return;
+        }
+
+        const response = await fetch(
+          `http://localhost:4000/api/cart/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to load cart");
+        }
+
+        const data = await response.json();
+
+        setCart(data);
+
+      } catch (err: any) {
+        setError(err?.message || "Unable to load checkout");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, [router]);
+
+  useEffect(() => {
+    if (orderType === "DELIVERY") {
+      loadDeliveryData();
+    }
+  }, [orderType]);
+
+  const items = cart?.items ?? [];
+
+  const subtotal = useMemo(() => {
+    return items.reduce((sum, item) => {
+      const price = Number(
+        item.menuItem?.price ?? item.price ?? 0
+      );
+
+      return sum + price * Number(item.quantity || 0);
+    }, 0);
+  }, [items]);
+
+  const deliveryFee = orderType === "DELIVERY" && selectedZoneId
+    ? Number(deliveryZones.find((zone) => zone.id === selectedZoneId)?.deliveryFee ?? 0)
+    : 0;
+  const tax = 0;
+  const serviceCharge = 0;
+  const total =
+    subtotal +
+    deliveryFee +
+    tax +
+    serviceCharge -
+    discount;
+
+
+  async function loadDeliveryData() {
+    try {
+      setAddressLoading(true);
+      setAddressError("");
+
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
+
+      if (!token) return;
+
+      const [addressResponse, zoneResponse] = await Promise.all([
+        fetch("http://localhost:4000/api/customers/addresses", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+        fetch("http://localhost:4000/api/delivery/zones/active", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      ]);
+
+      const addressText = await addressResponse.text();
+      const zoneText = await zoneResponse.text();
+
+      if (!addressResponse.ok) {
+        let message = "Could not load saved addresses.";
+        try {
+          const data = JSON.parse(addressText);
+          message = data?.message || message;
+        } catch {}
+        throw new Error(message);
+      }
+
+      const addressesData = addressText ? JSON.parse(addressText) : [];
+      const zonesData = zoneText ? JSON.parse(zoneText) : [];
+
+      const normalizedAddresses = Array.isArray(addressesData)
+        ? addressesData
+        : Array.isArray(addressesData?.data)
+          ? addressesData.data
+          : Array.isArray(addressesData?.items)
+            ? addressesData.items
+            : [];
+
+      const normalizedZones = Array.isArray(zonesData)
+        ? zonesData
+        : Array.isArray(zonesData?.data)
+          ? zonesData.data
+          : Array.isArray(zonesData?.items)
+            ? zonesData.items
+            : [];
+
+      setAddresses(normalizedAddresses);
+      setDeliveryZones(normalizedZones);
+
+      const defaultAddress =
+        normalizedAddresses.find((address: SavedAddress) => address.isDefault) ||
+        normalizedAddresses[0];
+
+      if (!deliveryAddressId && defaultAddress?.id) {
+        setDeliveryAddressId(defaultAddress.id);
+      }
+
+      if (!selectedZoneId && normalizedZones.length === 1) {
+        setSelectedZoneId(normalizedZones[0].id);
+      }
+    } catch (error) {
+      setAddressError(
+        error instanceof Error
+          ? error.message
+          : "Could not load delivery information.",
+      );
+    } finally {
+      setAddressLoading(false);
+    }
+  }
+
+  async function saveNewAddress() {
+    try {
+      setSavingAddress(true);
+      setAddressError("");
+
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
+
+      if (!token) {
+        router.push("/account");
+        return;
+      }
+
+      if (!newAddressLabel.trim()) {
+        setAddressError("Please enter an address label.");
+        return;
+      }
+
+      if (!newAddress.trim()) {
+        setAddressError("Please enter your delivery address.");
+        return;
+      }
+
+      const response = await fetch(
+        "http://localhost:4000/api/customers/addresses",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            label: newAddressLabel.trim(),
+            address: newAddress.trim(),
+            building: newBuilding.trim() || undefined,
+            roomNumber: newRoomNumber.trim() || undefined,
+            isDefault: addresses.length === 0,
+          }),
+        },
+      );
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        let message = "Could not save address.";
+        try {
+          const data = JSON.parse(text);
+          message = data?.message || message;
+        } catch {}
+        throw new Error(message);
+      }
+
+      const saved = text ? JSON.parse(text) : null;
+
+      await loadDeliveryData();
+
+      if (saved?.id) {
+        setDeliveryAddressId(saved.id);
+      }
+
+      setNewAddressLabel("Home");
+      setNewAddress("");
+      setNewBuilding("");
+      setNewRoomNumber("");
+      setShowNewAddress(false);
+    } catch (error) {
+      setAddressError(
+        error instanceof Error
+          ? error.message
+          : "Could not save address.",
+      );
+    } finally {
+      setSavingAddress(false);
+    }
+  }
+
+  async function applyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+
+    setCouponMessage("");
+
+    if (!code) {
+      setCouponMessage("Enter a coupon code.");
+      setCouponDiscount(0);
+      setCouponApplied("");
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+
+      const result = await apiPost<{
+        valid: boolean;
+        code: string;
+        offerName?: string;
+        type?: string;
+        discount?: number;
+        freeDelivery?: boolean;
+      }>("/offers/validate-coupon", {
+        code,
+        subtotal: Number(subtotal),
+      });
+
+      if (!result?.valid) {
+        throw new Error("Invalid coupon.");
+      }
+
+      const discount = Number(result.discount ?? 0);
+
+      setCouponDiscount(discount);
+      setCouponApplied(result.code || code);
+
+      setCouponMessage(
+        result.freeDelivery
+          ? `${result.code || code} applied - free delivery.`
+          : `${result.code || code} applied - discount BDT ${discount.toFixed(2)}.`
+      );
+
+      /*
+       * If this checkout already has a discount state,
+       * keep its existing total calculation in sync.
+       */
+      try {
+        if (typeof setDiscount === "function") {
+          setDiscount(discount);
+        }
+      } catch {}
+
+    } catch (error) {
+      setCouponDiscount(0);
+      setCouponApplied("");
+
+      setCouponMessage(
+        error instanceof Error
+          ? error.message
+          : "Coupon could not be applied."
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  function removeCoupon() {
+    setCouponInput("");
+    setCouponDiscount(0);
+    setCouponApplied("");
+    setCouponMessage("");
+
+    try {
+      if (typeof setDiscount === "function") {
+        setDiscount(0);
+      }
+    } catch {}
+  }
+
+
+
+  async function placeOrder() {
+    try {
+      setError("");
+
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
+
+      const customerId =
+        typeof window !== "undefined"
+          ? localStorage.getItem("customerId")
+          : null;
+
+      if (!token || !customerId) {
+        router.push("/account");
+        return;
+      }
+
+      if (!items.length) {
+        setError("Your cart is empty.");
+        return;
+      }
+
+      if (!customerName.trim()) {
+        setError("Please enter your name.");
+        return;
+      }
+
+      if (!customerPhone.trim()) {
+        setError("Please enter your phone number.");
+        return;
+      }
+
+      if (orderType === "DELIVERY" && !deliveryAddressId) {
+        setError("Please select or add a delivery address.");
+        return;
+      }
+
+      if (orderType === "DELIVERY" && !selectedZoneId && deliveryZones.length > 1) {
+        setError("Please select a delivery area.");
+        return;
+      }
+
+      setPlacing(true);
+
+      const body = {
+        paymentMethod: paymentMethod,
+        couponCode: couponApplied || undefined,
+
+        transactionId: paymentMethod === "CASH_ON_DELIVERY" ? undefined : transactionId.trim() || undefined,
+
+        customerId,
+        orderType,
+        items: items.map((item) => ({
+          menuItemId: item.menuItemId,
+          quantity: Number(item.quantity),
+        })),
+        deliveryFee,
+        deliveryAddressId:
+          orderType === "DELIVERY" ? deliveryAddressId : undefined,
+        tax,
+        serviceCharge,
+        discount,
+        specialInstructions:
+          [
+            `Customer Name: ${customerName.trim()}`,
+            `Phone: ${customerPhone.trim()}`,
+            customerEmail.trim()
+              ? `Email: ${customerEmail.trim()}`
+              : "",
+            specialInstructions.trim()
+              ? `Instructions: ${specialInstructions.trim()}`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" | "),
+      };
+
+      const response = await fetch(
+        "http://localhost:4000/api/orders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Order creation failed"
+        );
+      }
+
+      setCart({
+        ...cart!,
+        items: [],
+      });
+
+      try {
+        await fetch(
+          `http://localhost:4000/api/cart/clear/${cart!.userId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } catch {
+        // Order is already created; cart cleanup failure is non-fatal.
+      }
+
+      const created: CreatedOrder = data;
+
+      router.push(`/orders/${created.id}`);
+
+    } catch (err: any) {
+      setError(
+        err?.message || "Unable to place order."
+      );
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="rounded-3xl bg-white border shadow-sm p-8 text-center">
+          <h1 className="text-xl font-bold text-slate-900">
+            Loading checkout...
+          </h1>
+          <p className="text-sm text-slate-500 mt-2">
+            Please wait.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error && !cart) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 sm:p-6">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => router.push("/cart")}
+            className="mb-6 text-sm font-semibold text-blue-600"
+          >
+            ← Back to Cart
+          </button>
+
+          <div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-8 text-center">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Checkout unavailable
+            </h1>
+
+            <p className="text-slate-600 mt-3">
+              {error}
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!items.length) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 sm:p-6">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => router.push("/menu")}
+            className="mb-6 text-sm font-semibold text-blue-600"
+          >
+            ← Back to Menu
+          </button>
+
+          <div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-10 text-center">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Your cart is empty
+            </h1>
+
+            <p className="text-slate-500 mt-2">
+              Add some food before checkout.
+            </p>
+
+            <button
+              onClick={() => router.push("/menu")}
+              className="mt-6 px-6 py-3 rounded-xl bg-slate-900 text-white font-semibold"
+            >
+              Browse Menu
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 sm:p-6">
+      <div className="mx-auto max-w-6xl">
+
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => router.push("/cart")}
+            className="text-sm font-semibold text-blue-600"
+          >
+            ← Back to Cart
+          </button>
+
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900">
+            Checkout
+          </h1>
+
+          <div className="w-20" />
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <section className="lg:col-span-2 space-y-6">
+
+            <div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900">
+                Customer Information
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-4 mt-5">
+
+                <input
+                  value={customerName}
+                  onChange={(e) =>
+                    setCustomerName(e.target.value)
+                  }
+                  placeholder="Full Name"
+                  className="w-full rounded-xl border px-4 py-3 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 text-slate-900 placeholder:text-slate-400 bg-white"
+                />
+
+                <input
+                  value={customerPhone}
+                  onChange={(e) =>
+                    setCustomerPhone(e.target.value)
+                  }
+                  placeholder="Mobile Number"
+                  className="w-full rounded-xl border px-4 py-3 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 text-slate-900 placeholder:text-slate-400 bg-white"
+                />
+
+                <input
+                  value={customerEmail}
+                  onChange={(e) =>
+                    setCustomerEmail(e.target.value)
+                  }
+                  placeholder="Email (optional)"
+                  type="email"
+                  className="w-full rounded-xl border px-4 py-3 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 md:col-span-2 text-slate-900 placeholder:text-slate-400 bg-white"
+                />
+
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900">
+                Order Type
+              </h2>
+
+              <div className="grid grid-cols-3 gap-3 mt-5">
+
+                {[
+                  ["TAKEAWAY", "Takeaway"],
+                  ["DINE_IN", "Dine-in"],
+                  ["DELIVERY", "Delivery"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setOrderType(value)}
+                    className={[
+                      "rounded-2xl border px-4 py-4 text-sm font-bold",
+                      orderType === value
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-white text-slate-700",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+
+              </div>
+
+              {orderType === "DELIVERY" && (
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+
+                  <div>
+                    <h3 className="font-bold text-slate-900">
+                      Delivery Address
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-600">
+                      Select a saved address or add a new delivery address.
+                    </p>
+                  </div>
+
+                  {addressLoading ? (
+                    <div className="mt-4 rounded-xl bg-white px-4 py-3 text-sm text-slate-500">
+                      Loading saved addresses...
+                    </div>
+                  ) : addresses.length > 0 ? (
+                    <div className="mt-4 space-y-3">
+                      {addresses.map((address) => (
+                        <label
+                          key={address.id}
+                          className={[
+                            "flex cursor-pointer items-start gap-3 rounded-xl border bg-white p-4 transition",
+                            deliveryAddressId === address.id
+                              ? "border-slate-900 ring-2 ring-slate-200"
+                              : "border-slate-200 hover:border-slate-400",
+                          ].join(" ")}
+                        >
+                          <input
+                            type="radio"
+                            name="deliveryAddress"
+                            value={address.id}
+                            checked={deliveryAddressId === address.id}
+                            onChange={() =>
+                              setDeliveryAddressId(address.id)
+                            }
+                            className="mt-1 h-4 w-4"
+                          />
+
+                          <span className="min-w-0">
+                            <span className="block font-bold text-slate-900">
+                              {address.label}
+                              {address.isDefault ? " • Default" : ""}
+                            </span>
+
+                            <span className="mt-1 block text-sm text-slate-600">
+                              {address.address}
+                            </span>
+
+                            {(address.building || address.roomNumber) && (
+                              <span className="mt-1 block text-xs text-slate-500">
+                                {[
+                                  address.building
+                                    ? `Building: ${address.building}`
+                                    : "",
+                                  address.roomNumber
+                                    ? `Room: ${address.roomNumber}`
+                                    : "",
+                                ]
+                                  .filter(Boolean)
+                                  .join(" • ")}
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-xl bg-white px-4 py-3 text-sm text-slate-500">
+                      No saved delivery address found.
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAddress(!showNewAddress)}
+                    className="mt-4 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50 text-slate-900 placeholder:text-slate-400 bg-white"
+                  >
+                    {showNewAddress
+                      ? "Cancel New Address"
+                      : "+ Add New Address"}
+                  </button>
+
+                  {showNewAddress && (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+
+                      <div className="grid gap-3 md:grid-cols-2">
+
+                        <input
+                          value={newAddressLabel}
+                          onChange={(e) =>
+                            setNewAddressLabel(e.target.value)
+                          }
+                          placeholder="Label (Home / Hall / Office)"
+                          className="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 text-slate-900 placeholder:text-slate-400 bg-white"
+                        />
+
+                        <input
+                          value={newBuilding}
+                          onChange={(e) =>
+                            setNewBuilding(e.target.value)
+                          }
+                          placeholder="Building (optional)"
+                          className="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 text-slate-900 placeholder:text-slate-400 bg-white"
+                        />
+
+                        <input
+                          value={newRoomNumber}
+                          onChange={(e) =>
+                            setNewRoomNumber(e.target.value)
+                          }
+                          placeholder="Room Number (optional)"
+                          className="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 text-slate-900 placeholder:text-slate-400 bg-white"
+                        />
+
+                        <input
+                          value={newAddress}
+                          onChange={(e) =>
+                            setNewAddress(e.target.value)
+                          }
+                          placeholder="Full delivery address"
+                          className="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 md:col-span-2 text-slate-900 placeholder:text-slate-400 bg-white"
+                        />
+
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={saveNewAddress}
+                        disabled={savingAddress}
+                        className="mt-4 rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
+                      >
+                        {savingAddress
+                          ? "Saving Address..."
+                          : "Save Address"}
+                      </button>
+
+                    </div>
+                  )}
+
+                  {addressError && (
+                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 text-slate-900 placeholder:text-slate-400 bg-white">
+                      {addressError}
+                    </div>
+                  )}
+
+
+                </div>
+              )}
+            </div>
+
+            
+            <div className="mt-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.035] p-5">
+              <div className="mb-3">
+                <h3 className="text-base font-semibold">
+                  Coupon / Promo Code
+                </h3>
+
+                <p className="mt-1 text-xs text-white/45">
+                  Apply a valid offer code to get your discount.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      applyCoupon();
+                    }
+                  }}
+                  placeholder="e.g. MARHABA10"
+                  className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm uppercase outline-none placeholder:text-white/25 focus:border-emerald-400/50 text-slate-900 placeholder:text-slate-400 bg-white"
+                />
+
+                <button
+                  type="button"
+                  onClick={applyCoupon}
+                  disabled={couponLoading}
+                  className="rounded-xl bg-emerald-400 px-5 py-3 text-sm font-bold text-black hover:bg-emerald-300 disabled:opacity-50"
+                >
+                  {couponLoading ? "Checking..." : "Apply Coupon"}
+                </button>
+              </div>
+
+              {couponMessage && (
+                <div className="mt-3 rounded-xl bg-black/20 px-4 py-3 text-sm text-emerald-300">
+                  {couponMessage}
+                </div>
+              )}
+
+              {couponApplied && couponDiscount > 0 && (
+                <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-emerald-400/10 bg-black/15 px-4 py-3 text-slate-900 placeholder:text-slate-400 bg-white">
+                  <span className="text-xs text-white/50">
+                    Discount
+                  </span>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-emerald-300">
+                      - BDT {couponDiscount.toFixed(2)}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-xs text-red-300 hover:text-red-200"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+<div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900">
+                Payment Method
+              </h2>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+
+                {[
+                  ["CASH", "Cash"],
+                  ["CASH_ON_DELIVERY", "Cash on Delivery"],
+                  ["BANK_TRANSFER", "Bank Transfer"],
+                  ["QR_PAYMENT", "QR Payment"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setPaymentMethod(value)}
+                    className={[
+                      "rounded-2xl border px-4 py-4 text-sm font-bold",
+                      paymentMethod === value
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-white text-slate-700",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900">
+                Special Instructions
+              </h2>
+
+              <textarea
+                value={specialInstructions}
+                onChange={(e) =>
+                  setSpecialInstructions(e.target.value)
+                }
+                placeholder="Any special request..."
+                rows={4}
+                className="w-full mt-4 rounded-xl border px-4 py-3 outline-none resize-none focus:border-slate-900 focus:ring-2 focus:ring-slate-300 text-slate-900 placeholder:text-slate-400 bg-white"
+              />
+            </div>
+
+            <div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900">
+                Your Items
+              </h2>
+
+              <div className="space-y-3 mt-5">
+                {items.map((item) => {
+
+                  const price = Number(
+                    item.menuItem?.price ??
+                    item.price ??
+                    0
+                  );
+
+                  const lineTotal =
+                    price * Number(item.quantity);
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"
+                    >
+                      <div>
+                        <div className="font-bold text-slate-900">
+                          {item.menuItem?.name ||
+                            "Menu Item"}
+                        </div>
+
+                        <div className="text-sm text-slate-500 mt-1">
+                          BDT {price.toFixed(2)} ×{" "}
+                          {item.quantity}
+                        </div>
+                      </div>
+
+                      <div className="font-bold text-slate-900">
+                        BDT {lineTotal.toFixed(2)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </section>
+
+          <aside className="lg:col-span-1">
+            <div className="bg-white border border-slate-300 rounded-3xl shadow-xl p-6 shadow-sm sticky top-6">
+
+              <h2 className="text-xl font-black text-slate-900">
+                Order Summary
+              </h2>
+
+              <div className="space-y-3 mt-6 text-sm">
+
+                <div className="flex justify-between">
+                  <span className="text-slate-500">
+                    Subtotal
+                  </span>
+                  <span className="font-semibold">
+                    BDT {subtotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-500">
+                    Delivery Fee
+                  </span>
+                  <span className="font-semibold">
+                    BDT {deliveryFee.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-500">
+                    Tax
+                  </span>
+                  <span className="font-semibold">
+                    BDT {tax.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-500">
+                    Service Charge
+                  </span>
+                  <span className="font-semibold">
+                    BDT {serviceCharge.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-500">
+                    Discount
+                  </span>
+                  <span className="font-semibold">
+                    - BDT {discount.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="border-t pt-4 mt-4 flex justify-between">
+                  <span className="font-black text-lg">
+                    Total
+                  </span>
+
+                  <span className="font-black text-lg">
+                    BDT {total.toFixed(2)}
+                  </span>
+                </div>
+
+              </div>
+
+              
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4">
+                <h3 className="text-base font-bold text-slate-900">
+                  Payment Method
+                </h3>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Choose how you want to pay in BDT.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+
+                <label
+                  className={[
+                    "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition",
+                    paymentMethod === "CASH_ON_DELIVERY"
+                      ? "border-slate-900 bg-slate-50"
+                      : "border-slate-200 bg-white hover:border-slate-400",
+                  ].join(" ")}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="CASH_ON_DELIVERY"
+                    checked={paymentMethod === "CASH_ON_DELIVERY"}
+                    onChange={() => {
+                      setPaymentMethod("CASH_ON_DELIVERY");
+                      setTransactionId("");
+                    }}
+                    className="h-4 w-4 accent-slate-900"
+                  />
+
+                  <span>
+                    <span className="block text-sm font-bold text-slate-900">
+                      Cash on Delivery
+                    </span>
+                    <span className="block mt-1 text-xs text-slate-500">
+                      Pay cash in BDT when your order arrives.
+                    </span>
+                  </span>
+                </label>
+
+                <label
+                  className={[
+                    "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition",
+                    paymentMethod === "BKASH"
+                      ? "border-slate-900 bg-slate-50"
+                      : "border-slate-200 bg-white hover:border-slate-400",
+                  ].join(" ")}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="BKASH"
+                    checked={paymentMethod === "BKASH"}
+                    onChange={() => setPaymentMethod("BKASH")}
+                    className="h-4 w-4 accent-slate-900"
+                  />
+
+                  <span>
+                    <span className="block text-sm font-bold text-slate-900">
+                      bKash
+                    </span>
+                    <span className="block mt-1 text-xs text-slate-500">
+                      Pay using bKash and provide the transaction ID.
+                    </span>
+                  </span>
+                </label>
+
+                <label
+                  className={[
+                    "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition",
+                    paymentMethod === "NAGAD"
+                      ? "border-slate-900 bg-slate-50"
+                      : "border-slate-200 bg-white hover:border-slate-400",
+                  ].join(" ")}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="NAGAD"
+                    checked={paymentMethod === "NAGAD"}
+                    onChange={() => setPaymentMethod("NAGAD")}
+                    className="h-4 w-4 accent-slate-900"
+                  />
+
+                  <span>
+                    <span className="block text-sm font-bold text-slate-900">
+                      Nagad
+                    </span>
+                    <span className="block mt-1 text-xs text-slate-500">
+                      Pay using Nagad and provide the transaction ID.
+                    </span>
+                  </span>
+                </label>
+
+                {paymentMethod !== "CASH_ON_DELIVERY" && (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-slate-800">
+                        {paymentMethod === "BKASH"
+                          ? "bKash Transaction ID"
+                          : "Nagad Transaction ID"}
+                      </span>
+
+                      <input
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value)}
+                        placeholder="Enter transaction ID"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                      />
+                    </label>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      Enter the transaction ID after completing the payment.
+                    </p>
+                  </div>
+                )}
+
+              </div>
+            </div>
+<button
+                onClick={placeOrder}
+                disabled={placing}
+                className="w-full mt-6 rounded-2xl bg-slate-900 text-white py-4 font-black disabled:opacity-50"
+              >
+                {placing
+                  ? "Placing Order..."
+                  : "Place Order"}
+              </button>
+
+              <p className="text-xs text-slate-400 text-center mt-4">
+                Your order will be created securely through the backend.
+              </p>
+
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </main>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,209 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getRole, type AppRole } from "@/lib/auth";
+
+type NavLink = {
+  label: string;
+  href: string;
+  roles?: AppRole[];
+};
+
+const allLinks: NavLink[] = [
+  { label: "Home", href: "/" },
+  { label: "Menu", href: "/menu" },
+
+  {
+    label: "Cart",
+    href: "/cart",
+    roles: undefined,
+  },
+
+  {
+    label: "My Orders",
+    href: "/orders",
+    roles: undefined,
+  },
+
+  {
+    label: "Kitchen",
+    href: "/kitchen",
+    roles: ["SUPER_ADMIN", "MANAGER", "KITCHEN_STAFF"],
+  },
+
+  {
+    label: "Delivery",
+    href: "/delivery",
+    roles: ["SUPER_ADMIN", "MANAGER", "DELIVERY_STAFF"],
+  },
+
+  {
+    label: "Rider",
+    href: "/rider",
+    roles: ["DELIVERY_STAFF"],
+  },
+
+  {
+    label: "Admin",
+    href: "/admin",
+    roles: ["SUPER_ADMIN", "MANAGER"],
+  },
+
+  {
+    label: "Reports",
+    href: "/reports",
+    roles: ["SUPER_ADMIN", "MANAGER", "ACCOUNTANT"],
+  },
+
+  {
+    label: "Offers",
+    href: "/offers",
+    roles: ["SUPER_ADMIN", "MANAGER"],
+  },
+];
+
+export default function SiteNav() {
+  const pathname = usePathname();
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const refresh = () => {
+      const currentRole = getRole();
+      setRole(currentRole);
+      setLoggedIn(Boolean(localStorage.getItem("access_token")));
+    };
+
+    refresh();
+
+    window.addEventListener("storage", refresh);
+
+    return () => {
+      window.removeEventListener("storage", refresh);
+    };
+  }, [pathname]);
+
+  // Homepage already owns its premium navigation.
+  if (pathname === "/") {
+    return null;
+  }
+
+  const isStaff =
+    role === "SUPER_ADMIN" ||
+    role === "MANAGER" ||
+    role === "KITCHEN_STAFF" ||
+    role === "DELIVERY_STAFF" ||
+    role === "ACCOUNTANT";
+
+  const links = allLinks.filter((link) => {
+    if (link.roles) {
+      return role ? link.roles.includes(role) : false;
+    }
+
+    // Cart/My Orders are customer navigation.
+    if (link.href === "/cart" || link.href === "/orders") {
+      return !isStaff && loggedIn;
+    }
+
+    return true;
+  });
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0c0c0d]/95 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+
+        <Link
+          href="/"
+          onClick={() => setOpen(false)}
+          className="text-lg font-bold tracking-wide text-white"
+        >
+          MARHABA
+        </Link>
+
+          <Link
+            href="/admin/menu"
+            onClick={() => setOpen(false)}
+            className={navClass("/admin/menu")}
+          >
+            Menu Management
+          </Link>
+
+          <Link
+            href="/admin/menu-options"
+            onClick={() => setOpen(false)}
+            className={navClass("/admin/menu-options")}
+          >
+            Options & Add-ons
+          </Link>
+
+        <nav className="hidden items-center gap-1 lg:flex">
+          {links.map((link) => {
+            const active =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname === link.href ||
+                  pathname.startsWith(`${link.href}/`);
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
+                  active
+                    ? "bg-amber-400 text-black"
+                    : "text-white/65 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <button
+          type="button"
+          aria-label="Open menu"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/80 hover:bg-white/10 lg:hidden"
+        >
+          <span className="text-xl leading-none">
+            {open ? "×" : "☰"}
+          </span>
+        </button>
+      </div>
+
+      {open && (
+        <div className="border-t border-white/10 bg-[#0c0c0d] px-4 pb-4 pt-2 lg:hidden">
+          <nav className="mx-auto grid max-w-7xl gap-1">
+            {links.map((link) => {
+              const active =
+                link.href === "/"
+                  ? pathname === "/"
+                  : pathname === link.href ||
+                    pathname.startsWith(`${link.href}/`);
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
+                    active
+                      ? "bg-amber-400 text-black"
+                      : "text-white/70 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}

@@ -1,0 +1,335 @@
+﻿"use client";
+
+import Link from "next/link";
+import { apiGet, apiPost } from "../../lib/api";
+import { getUserId } from "../../lib/auth";
+import { useEffect, useMemo, useState } from "react";
+
+type MenuItem = {
+  id: string;
+  categoryId?: string;
+  name: string;
+  description?: string;
+  price: number | string;
+  imageUrl?: string;
+  isAvailable?: boolean;
+  isVegetarian?: boolean;
+  spiceLevel?: number;
+};
+
+type CartResponse = {
+  itemCount?: number;
+  items?: unknown[];
+};
+
+
+const API =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:4000/api";
+
+export default function MenuPage() {
+  const [cartCount, setCartCount] = useState(0);
+  const [addingId, setAddingId] = useState("");
+  const [addMessage, setAddMessage] = useState("");
+
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("ALL");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API}/menu`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Menu request failed");
+        return r.json();
+      })
+      .then((data) => {
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data?.items)
+              ? data.items
+              : [];
+
+        setItems(list);
+      })
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+    loadCartCount();
+  }, []);
+
+  const categories = useMemo(() => {
+    const values = Array.from(
+      new Set(
+        items
+          .map((item) => item.categoryId)
+          .filter((category): category is string => Boolean(category))
+      )
+    );
+
+    return ["ALL", ...values];
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    return items.filter((item) => {
+      const matchesText =
+        item.name.toLowerCase().includes(query.toLowerCase()) ||
+        (item.description || "")
+          .toLowerCase()
+          .includes(query.toLowerCase());
+
+      const matchesCategory =
+        filter === "ALL" || item.categoryId === filter;
+
+      return matchesText && matchesCategory;
+    });
+  }, [items, query, filter]);
+
+  const loadCartCount = async () => {
+    try {
+      const currentUserId = getUserId();
+
+      if (!currentUserId) {
+        setCartCount(0);
+        return;
+      }
+
+      const response = await apiGet<CartResponse>(
+        `/cart/${currentUserId}`,
+      );
+
+      setCartCount(Number(response?.itemCount || 0));
+    } catch {
+      setCartCount(0);
+    }
+  };
+
+  const addToCart = async (item: MenuItem) => {
+    setAddMessage("");
+
+    try {
+      const currentUserId = getUserId();
+
+      if (!currentUserId) {
+        setAddMessage("Please log in before adding items to your cart.");
+        return;
+      }
+
+      if (item.isAvailable === false) {
+        setAddMessage(`${item.name} is currently unavailable.`);
+        return;
+      }
+
+      setAddingId(item.id);
+
+      const response = await apiPost<CartResponse>("/cart", {
+        userId: currentUserId,
+        menuItemId: item.id,
+        quantity: 1,
+      });
+
+      setCartCount(Number(response?.itemCount || 0));
+      setAddMessage(`${item.name} added to cart.`);
+    } catch (error) {
+      setAddMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not add item to cart.",
+      );
+    } finally {
+      setAddingId("");
+    }
+  };
+
+  return (
+    <main>
+      <section className="marhaba-gradient">
+        <div className="marhaba-shell marhaba-section-space-sm">
+          <div className="max-w-3xl">
+            <span className="marhaba-pill">
+              MARHABA FOOD VIEW
+            </span>
+
+            <h1 className="marhaba-title mt-4 text-4xl font-black sm:text-5xl">
+              Discover something delicious.
+            </h1>
+
+            <p className="marhaba-muted mt-4 max-w-2xl leading-7">
+              Browse dishes in a clean, soft and colorful menu designed
+              for quick ordering on desktop and mobile.
+            </p>
+          </div>
+
+          <div className="mt-7">
+            <input
+              className="marhaba-input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search biryani, grill, drinks..."
+            />
+          </div>
+
+          <div className="marhaba-category-strip mt-4">
+            {categories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setFilter(category)}
+                className={
+                  filter === category
+                    ? "marhaba-category marhaba-category-active"
+                    : "marhaba-category"
+                }
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="marhaba-shell marhaba-section-space">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <div className="text-sm font-black text-orange-700">
+              OUR MENU
+            </div>
+            <h2 className="mt-2 text-3xl font-black">
+              {filtered.length} dishes
+            </h2>
+          </div>
+
+          <Link
+            href="/cart"
+            className="marhaba-btn marhaba-btn-soft"
+          >
+            Open Cart{cartCount > 0 ? ` (${cartCount})` : ""}
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="marhaba-soft-card p-10 text-center">
+            <div className="text-lg font-black">
+              Loading the menu...
+            </div>
+          </div>
+        ) : filtered.length ? (
+          <div className="marhaba-food-grid">
+            {filtered.map((item) => (
+              <article key={item.id} className="marhaba-food-card">
+                <div className="marhaba-food-image">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="marhaba-food-fallback">
+                      {item.name}
+                    </div>
+                  )}
+
+                  <div className="absolute left-3 top-3">
+                    <span
+                      className={
+                        item.isAvailable === false
+                          ? "marhaba-status marhaba-status-off"
+                          : "marhaba-status marhaba-status-live"
+                      }
+                    >
+                      {item.isAvailable === false
+                        ? "Unavailable"
+                        : "Available"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-lg font-black leading-tight">
+                      {item.name}
+                    </h3>
+
+                    <span className="marhaba-price">
+                      ฿{Number(item.price).toFixed(0)}
+                    </span>
+                  </div>
+
+                  <p className="marhaba-muted mt-3 min-h-[48px] text-sm leading-6">
+                    {item.description ||
+                      "Freshly prepared and served with care."}
+                  </p>
+
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      {item.isVegetarian ? (
+                        <span className="marhaba-status marhaba-status-live">
+                          Vegetarian
+                        </span>
+                      ) : null}
+
+                      {typeof item.spiceLevel === "number" ? (
+                        <span className="marhaba-status bg-amber-50 text-amber-700">
+                          Spice {item.spiceLevel}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                  <Link
+                    href={`/menu/${item.id}`}
+                    className="font-extrabold text-orange-700"
+                  >
+                    View
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => addToCart(item)}
+                    disabled={
+                      addingId === item.id ||
+                      item.isAvailable === false
+                    }
+                    className="marhaba-btn marhaba-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {addingId === item.id
+                      ? "Adding..."
+                      : item.isAvailable === false
+                        ? "Unavailable"
+                        : "Add to Cart"}
+                  </button>
+                </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="marhaba-soft-card p-10 text-center">
+            <h3 className="text-xl font-black">
+              No matching dishes
+            </h3>
+            <p className="marhaba-muted mt-2">
+              Try another search term or category.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setFilter("ALL");
+              }}
+              className="marhaba-btn marhaba-btn-primary mt-5"
+            >
+              Reset filters
+            </button>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+

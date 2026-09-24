@@ -1,0 +1,54 @@
+﻿# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# NestJS
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+src/generated/
+generated/
+
+# Prisma local artifacts
+prisma/*.db
+prisma/*.db-journal
+
+# Build
+build/
+
+# Project backups / temporary files
+_backups/
+backend_backups/
+cart_page_backups/
+cart_page_backups.zip
+frontend_backups/
+frontend_backup_20260922_235947/
+frontend_backup_files/
+frontend_old/
+qa_20260923_071004/
+qa_final/
+ui_cleanup_backup_20260923_144718/
