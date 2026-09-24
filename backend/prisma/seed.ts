@@ -93,7 +93,7 @@ const items = [
     name: "Handi Dum Biryani",
     price: 350,
     description: "Slow-cooked dum biryani prepared in traditional handi style.",
-    imageUrl: "/hero-biryani.png",
+    imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 7,
