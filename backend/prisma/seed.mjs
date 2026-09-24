@@ -281,7 +281,7 @@ const items = [
 async function main() {
   console.log("===== MENU SEED START =====");
 
-  const categoryMap = new Map<string, string>();
+  const categoryMap = new Map();
 
   for (const category of categories) {
     const saved = await prisma.menuCategory.upsert({
@@ -362,4 +362,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
