@@ -263,9 +263,7 @@ const items = [
     name: "Fresh Lime",
     price: 90,
     description: "Freshly prepared chilled lime drink.",
-    imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=85",
-    isVegetarian: true,
-    spiceLevel: 0,
+    imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=900&q=85",
     sortOrder: 4,
   },
   {
@@ -364,6 +362,7 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
 
 
