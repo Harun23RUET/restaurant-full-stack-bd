@@ -43,7 +43,7 @@ const items = [
     name: "Mutton Biryani",
     price: 380,
     description: "Tender mutton cooked with aromatic basmati rice and traditional spices.",
-    imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b9/Mutton_biryani.JPG",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 2,
@@ -63,7 +63,7 @@ const items = [
     name: "Chicken Biryani",
     price: 250,
     description: "Classic chicken biryani with aromatic rice and flavorful spices.",
-    imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1559528896-c5310744cce8?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 4,
@@ -73,7 +73,7 @@ const items = [
     name: "Egg Biryani",
     price: 220,
     description: "Aromatic biryani served with seasoned eggs.",
-    imageUrl: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 5,
@@ -93,7 +93,7 @@ const items = [
     name: "Handi Dum Biryani",
     price: 350,
     description: "Slow-cooked dum biryani prepared in traditional handi style.",
-    imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 7,
@@ -123,7 +123,7 @@ const items = [
     name: "Seekh Kebab",
     price: 320,
     description: "Traditional minced meat kebab grilled on skewers.",
-    imageUrl: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1628294895950-9805252327bc?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 3,
@@ -133,7 +133,7 @@ const items = [
     name: "Shami Kebab",
     price: 280,
     description: "Tender traditional kebab made with minced meat and aromatic spices.",
-    imageUrl: "https://images.unsplash.com/photo-1542367592-8849eb950fd8?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 4,
@@ -143,7 +143,7 @@ const items = [
     name: "Tandoori Chicken",
     price: 350,
     description: "Classic tandoori chicken marinated in spices and roasted until juicy.",
-    imageUrl: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=900&q=85",
     isVegetarian: false,
     spiceLevel: 2,
     sortOrder: 5,
@@ -362,6 +362,7 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
 
 

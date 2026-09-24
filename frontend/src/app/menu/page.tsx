@@ -80,7 +80,7 @@ export default function CustomerMenuPage() {
       setLoading(true);
       setError("");
 
-      const result = await apiGet("/menu");
+      const result = await apiGet("/menu?limit=100");
       setItems(unwrap(result));
     } catch (err: any) {
       setError(
@@ -384,6 +384,7 @@ export default function CustomerMenuPage() {
     </main>
   );
 }
+
 
 
 
