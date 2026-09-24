@@ -1,4 +1,6 @@
-﻿"use client";
+"use client";
+
+import Link from "next/link";
 
 import { useEffect, useState } from "react";
 
@@ -263,7 +265,23 @@ export default function Home() {
             </div>
           </div>
         )}
-      </nav>
+      
+<div className="flex items-center gap-2">
+  <Link
+    href="/login"
+    className="rounded-full border border-white/30 px-4 py-2 text-sm font-bold text-white transition hover:bg-white hover:text-black"
+  >
+    Login
+  </Link>
+
+  <Link
+    href="/account"
+    className="hidden rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-600 sm:block"
+  >
+    Sign Up
+  </Link>
+</div>
+</nav>
 
 
       {/* HERO */}
